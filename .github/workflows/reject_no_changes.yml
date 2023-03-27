@@ -1,9 +1,11 @@
 name: Reject improper pull/merge requests
 
 on:
-  push:
+  pull_request_target:
     branches:
       - main
+    types:
+      - opened
 
 jobs:
   reject-pull-requests:
