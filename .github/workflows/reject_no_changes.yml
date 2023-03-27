@@ -1,4 +1,4 @@
-name: Reject no changes
+name: Reject improper pull/merge requests
 
 on:
   pull_request:
@@ -6,25 +6,30 @@ on:
       - main
 
 jobs:
-  reject-no-changes:
+  reject-pull-requests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Check for changes in Readme.md and prompts.csv
+      - name: Check for changes in README.md and prompts.csv
         run: |
-          diff --brief --exclude=README.md --exclude=prompts.csv /dev/null README.md prompts.csv
-          if [ $? -eq 0 ]
+          if git diff --quiet HEAD^ README.md prompts.csv
           then
-            echo "No changes found in README.md and prompts.csv"
+            echo "::error file=README.md,line=1::No changes to README.md and prompts.csv"
             exit 1
           fi
 
-      - name: Check for 'Contributed by' line in Readme.md
+      - name: Check for required contributor message
         run: |
-          if ! grep -q "Contributed by: \[@.*\](https://github.com/.*)" README.md
+          if ! grep -q "Contributed by: \[@.*]\(https:\/\/github\.com\/.*\)" README.md
           then
-            echo "No 'Contributed by' line found in README.md"
+            echo "::error file=README.md,line=1::Required contributor message not found in README.md"
             exit 1
           fi
+
+      - name: Exit with error if checks fail
+        if: ${{ failure() }}
+        run: |
+          echo "::error::One or more checks failed, please make sure to follow the contribution guidelines in the README file."
+          exit 1
