@@ -1,7 +1,7 @@
 name: Reject improper pull/merge requests
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
