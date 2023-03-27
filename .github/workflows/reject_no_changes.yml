@@ -1,0 +1,30 @@
+name: Reject no changes
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  reject-no-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check for changes in Readme.md and prompts.csv
+        run: |
+          diff --brief --exclude=README.md --exclude=prompts.csv /dev/null README.md prompts.csv
+          if [ $? -eq 0 ]
+          then
+            echo "No changes found in README.md and prompts.csv"
+            exit 1
+          fi
+
+      - name: Check for 'Contributed by' line in Readme.md
+        run: |
+          if ! grep -q "Contributed by: \[@.*\](https://github.com/.*)" README.md
+          then
+            echo "No 'Contributed by' line found in README.md"
+            exit 1
+          fi
