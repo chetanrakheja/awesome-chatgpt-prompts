@@ -19,6 +19,7 @@ jobs:
           if git diff --quiet HEAD^ README.md prompts.csv
           then
             echo "::error file=README.md,line=1::No changes to README.md and prompts.csv"
+            echo "::set-output name=error-message::No changes to README.md and prompts.csv"
             exit 1
           fi
 
@@ -27,11 +28,33 @@ jobs:
           if ! grep -q "Contributed by: \[@.*]\(https:\/\/github\.com\/.*\)" README.md
           then
             echo "::error file=README.md,line=1::Required contributor message not found in README.md"
+            echo "::set-output name=error-message::Required contributor message not found in README.md"
             exit 1
           fi
 
       - name: Exit with error if checks fail
+        id: error-check
         if: ${{ failure() }}
         run: |
           echo "::error::One or more checks failed, please make sure to follow the contribution guidelines in the README file."
+          echo "::set-output name=error-message::One or more checks failed, please make sure to follow the contribution guidelines in the README file."
           exit 1
+
+      - name: Add comment if checks fail
+        uses: actions/github-script@v4
+        if: ${{ steps.error-check.outputs.error-message }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pullRequest } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `Error: ${steps.error-check.outputs.error-message}`
+            });
