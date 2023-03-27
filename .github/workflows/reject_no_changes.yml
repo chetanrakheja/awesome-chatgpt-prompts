@@ -19,7 +19,7 @@ jobs:
           if git diff --quiet HEAD^ README.md prompts.csv
           then
             echo "::error file=README.md,line=1::No changes to README.md and prompts.csv"
-            echo "::set-output name=error-message::No changes to README.md and prompts.csv"
+            echo "name=error-message=No changes to README.md and prompts.csv">> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -28,7 +28,7 @@ jobs:
           if ! grep -q "Contributed by: \[@.*]\(https:\/\/github\.com\/.*\)" README.md
           then
             echo "::error file=README.md,line=1::Required contributor message not found in README.md"
-            echo "::set-output name=error-message::Required contributor message not found in README.md"
+            echo "name=error-message=Required contributor message not found in README.md">> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -37,7 +37,7 @@ jobs:
         if: ${{ failure() }}
         run: |
           echo "::error::One or more checks failed, please make sure to follow the contribution guidelines in the README file."
-          echo "::set-output name=error-message::One or more checks failed, please make sure to follow the contribution guidelines in the README file."
+          echo "name=error-message=One or more checks failed, please make sure to follow the contribution guidelines in the README file.">> $GITHUB_OUTPUT
           exit 1
 
       - name: Add comment if checks fail
